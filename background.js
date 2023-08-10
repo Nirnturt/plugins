@@ -11,12 +11,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "saveToNotion") {
-    chrome.tabs.sendMessage(tab.id, { action: "saveToNotionFromContextMenu" });
-  }
-});
-
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "saveToNotion") {
     fetch(info.srcUrl)
       .then((response) => response.blob())
       .then((blob) => {

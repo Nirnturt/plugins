@@ -1,3 +1,4 @@
+window.contentScriptLoaded = true;
 console.log("Content script loaded.");
 
 if (!document.getElementById("contentScriptMarker")) {
