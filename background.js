@@ -27,6 +27,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       });
   }
 });
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "saveToNotion") {
+    const { imageUrl, prompt, property, url, additionalText } = request.data;
+    saveToNotion(imageUrl, prompt, property, url, additionalText);
+  }
+});
+
 async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
   let apiKey, databaseId;
 
@@ -114,6 +121,12 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
     if (!response.ok) {
       const error = await response.json();
       console.error("Error creating new page in Notion:", error);
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "showNotification",
+          message: "创建Notion页面时出错，原因为：" + error,
+        });
+      });
       throw new Error(
         `Error creating new page in Notion. ${JSON.stringify(error)}`
       );
@@ -153,6 +166,12 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
         if (!addChildResponse.ok) {
           const error = await addChildResponse.json();
           console.error("Error appending child block to Notion page:", error);
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "showNotification",
+              message: "添加Notion页面时出错，原因为：" + error,
+            });
+          });
           throw new Error(
             `Error appending child block to Notion page. ${JSON.stringify(
               error
@@ -160,13 +179,31 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
           );
         } else {
           console.log("Appended child block to Notion page successfully!");
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "showNotification",
+              message: "成功添加Notion页面！",
+            });
+          });
         }
       } catch (error) {
         console.error("Error appending child block to Notion page:", error);
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: "showNotification",
+            message: "添加Notion页面时出错，原因为：" + error,
+          });
+        });
       }
     }
   } catch (error) {
     console.error("Error saving to Notion:", error);
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: "showNotification",
+        message: "保存时出错，原因为：" + error,
+      });
+    });
   }
 }
 
