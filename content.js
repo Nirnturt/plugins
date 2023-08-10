@@ -72,7 +72,8 @@ if (!document.getElementById("contentScriptMarker")) {
     })
       .then((response) => response.json())
       .then((data) => {
-        const externalImageUrl = data.imgurl; // Assuming the API returns the link with key 'link'
+        const externalImageUrl = data.url; // Assuming the API returns the link with key 'link'
+        alert(data);
         const { prompt, property, url, additionalText } = getDataFromPage();
         // Use the externalImageUrl and other data for the rest of the logic to save to Notion
         // ... (rest of the logic to save to Notion using the original code)

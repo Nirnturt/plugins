@@ -27,7 +27,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       });
   }
 });
-
 async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
   let apiKey, databaseId;
 
@@ -109,52 +108,7 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
         Authorization: `Bearer ${apiKey}`,
         "Access-Control-Allow-Origin": `chrome-extension://${extensionId}`,
       },
-      body: JSON.stringify({
-        parent: {
-          database_id: databaseId,
-        },
-        properties: {
-          WebLink: {
-            title: [
-              {
-                text: {
-                  content: url,
-                },
-              },
-            ],
-          },
-          Prompt: {
-            rich_text: [
-              {
-                text: {
-                  content: prompt,
-                },
-              },
-            ],
-          },
-          Property: {
-            rich_text: [
-              {
-                text: {
-                  content: property,
-                },
-              },
-            ],
-          },
-          UserName: {
-            rich_text: [
-              {
-                text: {
-                  content: additionalText,
-                },
-              },
-            ],
-          },
-          Image: {
-            url: imageUrl,
-          },
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -166,6 +120,8 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
     } else {
       console.log("Created new page in Notion successfully!");
       const newPageResponse = await response.json();
+      console.log("New page response from Notion:", newPageResponse);
+      // ... 其余代码 ...
       const newPageId = newPageResponse.id; // 获取新页面的 ID
 
       const imageBlock = {
