@@ -1,4 +1,5 @@
 console.log("Content script loaded.");
+
 if (!document.getElementById("contentScriptMarker")) {
   let marker = document.createElement("div");
   marker.id = "contentScriptMarker";
@@ -10,18 +11,13 @@ if (!document.getElementById("contentScriptMarker")) {
       if (mutation.type === "childList") {
         const jobPage = document.querySelector("#jobPage");
         if (jobPage) {
-          const saveButton = document.querySelector("#saveButton");
-          if (saveButton) {
-            saveButton.removeEventListener("click", handleSaveToNotion);
-            saveButton.addEventListener("click", handleSaveToNotion);
-          }
+          // Removed the saveButton related logic
         }
       }
     }
   });
 
   const config = { childList: true, subtree: true };
-
   observer.observe(document.body, config);
 
   function getDataFromPage() {
@@ -58,25 +54,72 @@ if (!document.getElementById("contentScriptMarker")) {
     return { imageUrl, prompt, property, url, additionalText };
   }
 
-  function handleSaveToNotion() {
-    const { imageUrl, prompt, property, url, additionalText } =
-      getDataFromPage();
-    chrome.runtime.sendMessage(
-      {
-        action: "saveToNotion",
-        data: { imageUrl, prompt, property, url, additionalText },
-      },
-      (response) => {
-        console.log(response);
-      }
-    );
+  function handleSaveToNotion(base64Image) {
+    // Convert base64 image back to blob
+    const byteCharacters = atob(base64Image.split(",")[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: "image/png" });
+
+    // Upload the blob to the API and get the external link
+    fetch("https://api.nirn.design/release/img_Update", {
+      method: "POST",
+      body: blob,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const externalImageUrl = data.imgurl; // Assuming the API returns the link with key 'link'
+        const { prompt, property, url, additionalText } = getDataFromPage();
+        // Use the externalImageUrl and other data for the rest of the logic to save to Notion
+        // ... (rest of the logic to save to Notion using the original code)
+        chrome.runtime.sendMessage(
+          {
+            action: "saveToNotion",
+            data: {
+              imageUrl: externalImageUrl,
+              prompt,
+              property,
+              url,
+              additionalText,
+            },
+          },
+          (response) => {
+            console.log(response);
+          }
+        );
+      });
   }
+  //   function handleSaveToNotion(base64Image) {
+  //   // Convert base64 image back to blob
+  //   const byteCharacters = atob(base64Image.split(',')[1]);
+  //   const byteNumbers = new Array(byteCharacters.length);
+  //   for (let i = 0; i < byteCharacters.length; i++) {
+  //     byteNumbers[i] = byteCharacters.charCodeAt(i);
+  //   }
+  //   const byteArray = new Uint8Array(byteNumbers);
+  //   const blob = new Blob([byteArray], {type: 'image/png'});
+
+  //   // Log blob details for testing
+  //   console.log("Blob details:", blob);
+
+  //   // Convert blob back to an image and open in a new tab
+  //   const imageUrl = URL.createObjectURL(blob);
+  //   const img = new Image();
+  //   img.src = imageUrl;
+  //   img.onload = function() {
+  //     const win = window.open("");
+  //     win.document.write("<img src='" + imageUrl + "' />");
+  //   };
+  // }
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (
       ["saveToNotionFromContextMenu", "saveToNotion"].includes(request.action)
     ) {
-      handleSaveToNotion();
+      handleSaveToNotion(request.imageBlob);
       sendResponse({
         message: `Data saved successfully from ${
           request.action === "saveToNotionFromContextMenu"

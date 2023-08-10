@@ -5,7 +5,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "saveToNotion",
     title: "Save to Notion",
-    contexts: ["page"],
+    contexts: ["image"],
   });
 });
 
@@ -15,18 +15,23 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "saveToNotion") {
-    if (request.data) {
-      const { imageUrl, prompt, property, url, additionalText } = request.data;
-      saveToNotion(imageUrl, prompt, property, url, additionalText);
-      sendResponse({ message: "Data saved successfully" });
-    } else {
-      console.error("Error: request.data is undefined.");
-      sendResponse({ message: "Error: request.data is undefined." });
-    }
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "saveToNotion") {
+    fetch(info.srcUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Convert blob to a readable stream to send via chrome message
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = function () {
+          const base64data = reader.result;
+          chrome.tabs.sendMessage(tab.id, {
+            action: "saveToNotionFromContextMenu",
+            imageBlob: base64data,
+          });
+        };
+      });
   }
-  return true; // 添加这一行以确保响应可以在异步操作完成后发送
 });
 
 async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
