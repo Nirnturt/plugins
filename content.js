@@ -75,7 +75,7 @@ if (!document.getElementById("contentScriptMarker")) {
     return { imageUrl, prompt, property, url, additionalText };
   }
 
-  function handleSaveToNotion(base64Image) {
+  function handleSaveToNotion(base64Image, sendResponse) {
     // Convert base64 image back to blob
     const byteCharacters = atob(base64Image.split(",")[1]);
     const byteNumbers = new Array(byteCharacters.length);
@@ -154,14 +154,7 @@ if (!document.getElementById("contentScriptMarker")) {
       ["saveToNotionFromContextMenu", "saveToNotion"].includes(request.action)
     ) {
       handleSaveToNotion(request.imageBlob, sendResponse);
-      sendResponse({
-        message: `Data saved successfully from ${
-          request.action === "saveToNotionFromContextMenu"
-            ? "context menu"
-            : "popup"
-        }`,
-      });
+      return true; // 返回true表示您将异步响应
     }
-    return true;
   });
 }
