@@ -1,4 +1,4 @@
-const extensionId = "pnckdkkbgfkkegblpkjgfemldcemiode";
+const extensionId = chrome.runtime.id; // 动态获取当前扩展的ID
 
 chrome.runtime.onInstalled.addListener(() => {
   // 创建右键菜单

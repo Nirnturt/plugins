@@ -90,6 +90,7 @@ if (!document.getElementById("contentScriptMarker")) {
       const apiUrl = result.apiurl;
       if (!apiUrl) {
         showNotification("后端链接获取错误，请检查设置");
+        sendResponse({ message: "后端链接获取错误" }); // 在此处发送响应
         return; // 停止代码运行
       }
       fetch(apiUrl, {
@@ -118,6 +119,7 @@ if (!document.getElementById("contentScriptMarker")) {
               console.log(response);
             }
           );
+          sendResponse({ message: "Data saved successfully" }); // 在此处发送响应
         });
     });
   }
@@ -151,7 +153,7 @@ if (!document.getElementById("contentScriptMarker")) {
     if (
       ["saveToNotionFromContextMenu", "saveToNotion"].includes(request.action)
     ) {
-      handleSaveToNotion(request.imageBlob);
+      handleSaveToNotion(request.imageBlob, sendResponse);
       sendResponse({
         message: `Data saved successfully from ${
           request.action === "saveToNotionFromContextMenu"
