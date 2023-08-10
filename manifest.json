@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt hunter",
+  "version": "1.0",
+  "description": "Save the prompt images and other information from the Midjourney details page to your own Notion database",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "webNavigation",
+    "scripting",
+    "contextMenus"
+  ],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.midjourney.com/*", "https://www.niji.com/*"],
+      "js": ["content.js"]
+    }
+],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "settings.html",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
