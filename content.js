@@ -86,33 +86,40 @@ if (!document.getElementById("contentScriptMarker")) {
     const blob = new Blob([byteArray], { type: "image/png" });
 
     // Upload the blob to the API and get the external link
-    fetch("https://api.nirn.design/release/img_Update", {
-      method: "POST",
-      body: blob,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const externalImageUrl = JSON.parse(data.body).url;
-        showNotification("图片已成功上传!");
-        const { prompt, property, url, additionalText } = getDataFromPage();
-        // Use the externalImageUrl and other data for the rest of the logic to save to Notion
-        // ... (rest of the logic to save to Notion using the original code)
-        chrome.runtime.sendMessage(
-          {
-            action: "saveToNotion",
-            data: {
-              imageUrl: externalImageUrl,
-              prompt,
-              property,
-              url,
-              additionalText,
+    chrome.storage.sync.get("apiurl", (result) => {
+      const apiUrl = result.apiurl;
+      if (!apiUrl) {
+        showNotification("后端链接获取错误，请检查设置");
+        return; // 停止代码运行
+      }
+      fetch(apiUrl, {
+        method: "POST",
+        body: blob,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          const externalImageUrl = JSON.parse(data.body).url;
+          showNotification("图片已成功上传!");
+          const { prompt, property, url, additionalText } = getDataFromPage();
+          // Use the externalImageUrl and other data for the rest of the logic to save to Notion
+          // ... (rest of the logic to save to Notion using the original code)
+          chrome.runtime.sendMessage(
+            {
+              action: "saveToNotion",
+              data: {
+                imageUrl: externalImageUrl,
+                prompt,
+                property,
+                url,
+                additionalText,
+              },
             },
-          },
-          (response) => {
-            console.log(response);
-          }
-        );
-      });
+            (response) => {
+              console.log(response);
+            }
+          );
+        });
+    });
   }
   function showNotification(message) {
     // 创建通知元素

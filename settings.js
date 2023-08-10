@@ -2,12 +2,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const settingsForm = document.getElementById("settingsForm");
   const notionApiKeyInput = document.getElementById("notionApiKey");
   const notionPageLinkInput = document.getElementById("notionPageLink");
+  const apiurlInput = document.getElementById("apiurl");
 
   // Load saved settings
-  chrome.storage.sync.get(["notionApiKey", "notionPageLink"], (result) => {
-    notionApiKeyInput.value = result.notionApiKey || "";
-    notionPageLinkInput.value = result.notionPageLink || "";
-  });
+  chrome.storage.sync.get(
+    ["notionApiKey", "notionPageLink", "apiurl"],
+    (result) => {
+      notionApiKeyInput.value = result.notionApiKey || "";
+      notionPageLinkInput.value = result.notionPageLink || "";
+      apiurlInput.value = result.apiurl || "";
+    }
+  );
 
   // Save settings
   settingsForm.addEventListener("submit", (event) => {
@@ -15,15 +20,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const notionPageLink = notionPageLinkInput.value;
     const notionDatabaseId = extractDatabaseIdFromPageLink(notionPageLink);
+    const apiurl = apiurlInput.value;
 
     chrome.storage.sync.set(
       {
         notionApiKey: notionApiKeyInput.value,
         notionDatabaseId: notionDatabaseId,
         notionPageLink: notionPageLink,
+        apiurl: apiurl,
       },
       () => {
-        alert("Settings saved!");
+        alert("保存成功 Settings saved!");
       }
     );
   });

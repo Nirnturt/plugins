@@ -11,20 +11,42 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "saveToNotion") {
-    fetch(info.srcUrl)
-      .then((response) => response.blob())
-      .then((blob) => {
-        // Convert blob to a readable stream to send via chrome message
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = function () {
-          const base64data = reader.result;
-          chrome.tabs.sendMessage(tab.id, {
-            action: "saveToNotionFromContextMenu",
-            imageBlob: base64data,
+    chrome.storage.sync.get(
+      ["notionApiKey", "notionDatabaseId", "apiurl"],
+      (result) => {
+        if (
+          !result.notionApiKey ||
+          !result.notionDatabaseId ||
+          !result.apiurl
+        ) {
+          console.error(
+            "Missing Notion API key or Database ID in settings. Please fill them in before proceeding."
+          );
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "showNotification",
+              message:
+                "Notion API Key 、Notion 页面 URL 或后端地址未填写，请在插件设置中填写",
+            });
           });
-        };
-      });
+          return;
+        }
+        fetch(info.srcUrl)
+          .then((response) => response.blob())
+          .then((blob) => {
+            // Convert blob to a readable stream to send via chrome message
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = function () {
+              const base64data = reader.result;
+              chrome.tabs.sendMessage(tab.id, {
+                action: "saveToNotionFromContextMenu",
+                imageBlob: base64data,
+              });
+            };
+          });
+      }
+    );
   }
 });
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -39,19 +61,18 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
 
   // 获取 Notion API 密钥和数据库 ID
   await new Promise((resolve) => {
-    chrome.storage.sync.get(["notionApiKey", "notionDatabaseId"], (result) => {
-      apiKey = result.notionApiKey;
-      databaseId = result.notionDatabaseId;
-      console.log("Notion API Key:", result.notionApiKey);
-      console.log("Notion Database ID:", result.notionDatabaseId);
-      resolve();
-    });
+    chrome.storage.sync.get(
+      ["notionApiKey", "notionDatabaseId", "apiurl"],
+      (result) => {
+        apiKey = result.notionApiKey;
+        databaseId = result.notionDatabaseId;
+        apiurl = result.apiurl;
+        console.log("Notion API Key:", result.notionApiKey);
+        console.log("Notion Database ID:", result.notionDatabaseId);
+        resolve();
+      }
+    );
   });
-
-  if (!apiKey || !databaseId) {
-    console.error("Missing Notion API key or Database ID in settings.");
-    return;
-  }
 
   // 创建 Notion 页面并保存信息
   try {
