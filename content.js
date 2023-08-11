@@ -6,7 +6,7 @@ if (!document.getElementById("contentScriptMarker")) {
   style.innerHTML = `
   .custom-notification {
     position: fixed;
-    right: 20px;
+    left: 20px;
     top: 20px;
     background: #ffffff;
     color: black;
@@ -43,34 +43,44 @@ if (!document.getElementById("contentScriptMarker")) {
 
   function getDataFromPage() {
     const jobPage = document.getElementById("jobPage");
-    const imageContainer = jobPage.querySelector(
+    let imageContainer,
+      imageUrl = "",
+      prompt,
+      property,
+      additionalText;
+
+    // 尝试获取midjourney页面的元素
+    imageContainer = jobPage.querySelector(
       ".relative.h-auto.w-full.false, .relative.h-auto.w-full.overflow-hidden"
     );
+
+    // 如果未找到midjourney的元素，则尝试获取niji页面的元素
+    if (!imageContainer) {
+      imageContainer = jobPage.querySelector(
+        ".relative.h-auto.w-full.false, .relative.h-auto.w-full.overflow-hidden"
+      ); // 请根据niji页面的实际结构进行修改
+    }
+
     const imageElements = imageContainer.querySelectorAll("img");
-    let imageUrl = "";
 
     for (const imageElement of imageElements) {
       const src = imageElement.src;
       if (
-        src.startsWith("https://cdn.midjourney.com/") ||
-        src.startsWith("https://mj-gallery.com/")
+        src.startsWith("https://mj-gallery.com/") ||
+        src.startsWith("https://cdn.midjourney.com/")
       ) {
         imageUrl = src.replace("_32_N.webp", ".png");
         break;
       }
     }
 
-    const prompt = jobPage.querySelector(
-      ".first-letter\\:capitalize"
-    ).innerText;
-    const property = jobPage.querySelector(
-      ".line-clamp-1:not(.break-all)"
-    ).innerText;
+    prompt = jobPage.querySelector(".first-letter\\:capitalize").innerText;
+    property = jobPage.querySelector(".line-clamp-1:not(.break-all)").innerText;
     const url = window.location.href;
     const additionalTextContainer = jobPage.querySelector(
       ".flex.w-full.flex-wrap-reverse.justify-between"
     );
-    const additionalText = additionalTextContainer.querySelector("p").innerText;
+    additionalText = additionalTextContainer.querySelector("p").innerText;
 
     return { imageUrl, prompt, property, url, additionalText };
   }

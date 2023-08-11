@@ -229,21 +229,25 @@ async function saveToNotion(imageUrl, prompt, property, url, additionalText) {
 }
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (
-    changeInfo.url &&
-    (changeInfo.url.includes("https://www.midjourney.com/app/jobs/") ||
-      changeInfo.url.includes("https://www.midjourney.com/app/feed/") ||
-      changeInfo.url.includes("https://nijijourney.com/en/app/jobs/") ||
-      changeInfo.url.includes("https://nijijourney.com/en/app/feed/"))
-  ) {
-    try {
-      await chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ["content.js"],
-      });
-      console.log("Content script injected.");
-    } catch (error) {
-      console.error("Error injecting content script:", error);
+  if (changeInfo.url) {
+    const urlPatternMidJourney =
+      /^https:\/\/www\.midjourney\.com\/app\/(jobs|feed)\//;
+    const urlPatternNijiJourney =
+      /^https:\/\/nijijourney\.com\/[a-z]{2}\/app\/(jobs|feed)\//;
+
+    if (
+      urlPatternMidJourney.test(changeInfo.url) ||
+      urlPatternNijiJourney.test(changeInfo.url)
+    ) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ["content.js"],
+        });
+        console.log("Content script injected.");
+      } catch (error) {
+        console.error("Error injecting content script:", error);
+      }
     }
   }
 });
